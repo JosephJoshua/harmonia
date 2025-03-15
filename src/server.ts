@@ -38,13 +38,13 @@ export class Chat extends AIChatAgent<Env> {
     return agentContext.run(this, async () => {
       return createDataStreamResponse({
         execute: async (dataStream) => {
-          // Handle tool calls
-          const processedMessages = await processToolCalls({
+          // Handle tool calls and only take last ten messages
+          const processedMessages = (await processToolCalls({
             messages: this.messages,
             dataStream,
             tools,
             executions,
-          });
+          })).filter((_, index) => index >= this.messages.length - 10);
 
           const openrouter = createOpenRouter({
             apiKey: this.env.OPENROUTER_API_KEY,
@@ -107,7 +107,10 @@ export class Chat extends AIChatAgent<Env> {
             result.mergeIntoDataStream(dataStream);
           } catch (error) {
             console.error("Error while processing agents:", error);
-            return dataStream.writeData("Error while processing agents");
+            return dataStream.writeData({
+              type: "text",
+              text: "Error while processing agents",
+            });
           }
         },
       });

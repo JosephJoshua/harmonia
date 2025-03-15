@@ -18,11 +18,10 @@ const toolsRequiringConfirmation: (keyof typeof tools)[] = [
 
 export default function Chat() {
   const [theme, setTheme] = useState<"dark" | "light">(() => {
-    // Check localStorage first, default to dark if not found
     const savedTheme = localStorage.getItem("theme");
     return (savedTheme as "dark" | "light") || "dark";
   });
-  const [showDebug, setShowDebug] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
@@ -64,6 +63,7 @@ export default function Chat() {
     handleSubmit: handleAgentSubmit,
     addToolResult,
     clearHistory,
+    status: agentStatus,
   } = useAgentChat({
     agent,
     maxSteps: 5,
@@ -100,7 +100,7 @@ export default function Chat() {
               className="text-[#F48120]"
               data-icon="agents"
             >
-              <title>Cloudflare Agents</title>
+              <title>Harmonia</title>
               <symbol id="ai:local:agents" viewBox="0 0 80 79">
                 <path
                   fill="currentColor"
@@ -112,17 +112,7 @@ export default function Chat() {
           </div>
 
           <div className="flex-1">
-            <h2 className="font-semibold text-base">AI Chat Agent</h2>
-          </div>
-
-          <div className="flex items-center gap-2 mr-2">
-            <Bug className="h-4 w-4 text-muted-foreground/50 dark:text-gray-500" />
-            <Switch
-              checked={showDebug}
-              onCheckedChange={setShowDebug}
-              aria-label="Toggle debug mode"
-              className="data-[state=checked]:bg-gray-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=unchecked]:bg-gray-700"
-            />
+            <h2 className="font-semibold text-base">Harmonia</h2>
           </div>
 
           <Button
@@ -157,10 +147,10 @@ export default function Chat() {
                   <div className="bg-[#F48120]/10 text-[#F48120] rounded-full p-3 inline-flex">
                     <Bot className="h-6 w-6" />
                   </div>
-                  <h3 className="font-semibold text-lg">Welcome to AI Chat</h3>
+                  <h3 className="font-semibold text-lg">Welcome to Harmonia</h3>
                   <p className="text-muted-foreground text-sm">
-                    Start a conversation with your AI assistant. Try asking
-                    about:
+                    Start a conversation with your personal life assistant. Try
+                    asking about:
                   </p>
                   <ul className="text-sm text-left space-y-2">
                     <li className="flex items-center gap-2">
@@ -185,11 +175,6 @@ export default function Chat() {
 
             return (
               <div key={m.id}>
-                {showDebug && (
-                  <pre className="text-xs text-muted-foreground overflow-scroll">
-                    {JSON.stringify(m, null, 2)}
-                  </pre>
-                )}
                 <div
                   className={`flex ${isUser ? "justify-end" : "justify-start"}`}
                 >
@@ -201,7 +186,7 @@ export default function Chat() {
                     {showAvatar && !isUser ? (
                       <Avatar className="h-8 w-8 mt-1 flex-shrink-0">
                         <AvatarFallback className="bg-[#F48120] text-white">
-                          AI
+                          H
                         </AvatarFallback>
                       </Avatar>
                     ) : (
@@ -209,151 +194,163 @@ export default function Chat() {
                     )}
 
                     <div>
-                      <div>
-                        {m.parts?.map((part, i) => {
-                          if (part.type === "text") {
-                            return (
-                              // biome-ignore lint/suspicious/noArrayIndexKey: it's fine here
-                              <div key={i}>
-                                <Card
-                                  className={`p-3 rounded-md ${
-                                    isUser
-                                      ? "bg-primary text-primary-foreground rounded-br-none"
-                                      : "rounded-bl-none border-assistant-border"
-                                  } ${
-                                    part.text.startsWith("scheduled message")
-                                      ? "border-accent/50"
-                                      : ""
-                                  } relative`}
-                                >
-                                  {part.text.startsWith(
-                                    "scheduled message"
-                                  ) && (
-                                    <span className="absolute -top-3 -left-2 text-base">
-                                      🕒
-                                    </span>
-                                  )}
-                                  <p className="text-sm whitespace-pre-wrap">
-                                    {part.text.replace(
-                                      /^scheduled message: /,
-                                      ""
-                                    )}
-                                  </p>
-                                </Card>
-                                <p
-                                  className={`text-xs text-muted-foreground mt-1 ${
-                                    isUser ? "text-right" : "text-left"
-                                  }`}
-                                >
-                                  {formatTime(
-                                    new Date(m.createdAt as unknown as string)
+                      {m.parts?.map((part, i) => {
+                        if (part.type === "text") {
+                          return (
+                            // biome-ignore lint/suspicious/noArrayIndexKey: it's fine here
+                            <div key={i}>
+                              <Card
+                                className={`p-3 rounded-md ${
+                                  isUser
+                                    ? "bg-primary text-primary-foreground rounded-br-none"
+                                    : "rounded-bl-none border-assistant-border"
+                                } ${
+                                  part.text.startsWith("scheduled message")
+                                    ? "border-accent/50"
+                                    : ""
+                                } relative`}
+                              >
+                                {part.text.startsWith("scheduled message") && (
+                                  <span className="absolute -top-3 -left-2 text-base">
+                                    🕒
+                                  </span>
+                                )}
+                                <p className="text-sm whitespace-pre-wrap">
+                                  {part.text.replace(
+                                    /^scheduled message: /,
+                                    ""
                                   )}
                                 </p>
-                              </div>
+                              </Card>
+                              <p
+                                className={`text-xs text-muted-foreground mt-1 ${
+                                  isUser ? "text-right" : "text-left"
+                                }`}
+                              >
+                                {formatTime(
+                                  new Date(m.createdAt as unknown as string)
+                                )}
+                              </p>
+                            </div>
+                          );
+                        }
+
+                        if (part.type === "tool-invocation") {
+                          const toolInvocation = part.toolInvocation;
+                          const toolCallId = toolInvocation.toolCallId;
+
+                          if (
+                            toolsRequiringConfirmation.includes(
+                              toolInvocation.toolName as keyof typeof tools
+                            ) &&
+                            toolInvocation.state === "call"
+                          ) {
+                            return (
+                              <Card
+                                // biome-ignore lint/suspicious/noArrayIndexKey: it's fine here
+                                key={i}
+                                className="p-4 my-3 bg-secondary/30 border-secondary/50 rounded-md"
+                              >
+                                <div className="flex items-center gap-2 mb-3">
+                                  <div className="bg-[#F48120]/10 p-1.5 rounded-full">
+                                    <Bot className="h-4 w-4 text-[#F48120]" />
+                                  </div>
+                                  <h4 className="font-medium">
+                                    {toolInvocation.toolName}
+                                  </h4>
+                                </div>
+
+                                <div className="mb-3">
+                                  <h5 className="text-xs font-medium mb-1 text-muted-foreground">
+                                    Arguments:
+                                  </h5>
+                                  <pre className="bg-background/80 p-2 rounded-md text-xs overflow-auto">
+                                    {JSON.stringify(
+                                      toolInvocation.args,
+                                      null,
+                                      2
+                                    )}
+                                  </pre>
+                                </div>
+
+                                <div className="flex gap-2 justify-end">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      addToolResult({
+                                        toolCallId,
+                                        result: APPROVAL.NO,
+                                      })
+                                    }
+                                  >
+                                    Reject
+                                  </Button>
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    onClick={() =>
+                                      addToolResult({
+                                        toolCallId,
+                                        result: APPROVAL.YES,
+                                      })
+                                    }
+                                  >
+                                    Approve
+                                  </Button>
+                                </div>
+                              </Card>
                             );
                           }
-
-                          if (part.type === "tool-invocation") {
-                            const toolInvocation = part.toolInvocation;
-                            const toolCallId = toolInvocation.toolCallId;
-
-                            if (
-                              toolsRequiringConfirmation.includes(
-                                toolInvocation.toolName as keyof typeof tools
-                              ) &&
-                              toolInvocation.state === "call"
-                            ) {
-                              return (
-                                <Card
-                                  // biome-ignore lint/suspicious/noArrayIndexKey: it's fine here
-                                  key={i}
-                                  className="p-4 my-3 bg-secondary/30 border-secondary/50 rounded-md"
-                                >
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <div className="bg-[#F48120]/10 p-1.5 rounded-full">
-                                      <Bot className="h-4 w-4 text-[#F48120]" />
-                                    </div>
-                                    <h4 className="font-medium">
-                                      {toolInvocation.toolName}
-                                    </h4>
-                                  </div>
-
-                                  <div className="mb-3">
-                                    <h5 className="text-xs font-medium mb-1 text-muted-foreground">
-                                      Arguments:
-                                    </h5>
-                                    <pre className="bg-background/80 p-2 rounded-md text-xs overflow-auto">
-                                      {JSON.stringify(
-                                        toolInvocation.args,
-                                        null,
-                                        2
-                                      )}
-                                    </pre>
-                                  </div>
-
-                                  <div className="flex gap-2 justify-end">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() =>
-                                        addToolResult({
-                                          toolCallId,
-                                          result: APPROVAL.NO,
-                                        })
-                                      }
-                                    >
-                                      Reject
-                                    </Button>
-                                    <Button
-                                      variant="default"
-                                      size="sm"
-                                      onClick={() =>
-                                        addToolResult({
-                                          toolCallId,
-                                          result: APPROVAL.YES,
-                                        })
-                                      }
-                                    >
-                                      Approve
-                                    </Button>
-                                  </div>
-                                </Card>
-                              );
-                            }
-                            return null;
-                          }
                           return null;
-                          // return (
-                          //   <div key={i}>
-                          //     <Card className="p-3 rounded-2xl bg-secondary border-secondary">
-                          //       <pre className="text-xs">
-                          //         {JSON.stringify(part, null, 2)}
-                          //       </pre>
-                          //     </Card>
-                          //   </div>
-                          // );
-                        })}
-                      </div>
+                        }
+
+                        return null;
+                        // return (
+                        //   <div key={i}>
+                        //     <Card className="p-3 rounded-2xl bg-secondary border-secondary">
+                        //       <pre className="text-xs">
+                        //         {JSON.stringify(part, null, 2)}
+                        //       </pre>
+                        //     </Card>
+                        //   </div>
+                        // );
+                      })}
                     </div>
                   </div>
                 </div>
               </div>
             );
           })}
+
+          {agentStatus === "submitted" ? (
+            <div>
+              <div className="flex justify-start">
+                <div className={"flex gap-2 max-w-[85%] flex-row"}>
+                  <Avatar className="h-8 w-8 mt-1 flex-shrink-0">
+                    <AvatarFallback className="bg-[#F48120] text-white">
+                      H
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div>
+                    <Card className="p-3 rounded-md rounded-bl-none border-assistant-border relative">
+                      <p className="text-sm whitespace-pre-wrap">
+                        Trying to figure out the best response...
+                      </p>
+                    </Card>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           <div ref={messagesEndRef} />
         </div>
 
         {/* Input Area */}
         <form
-          onSubmit={(e) =>
-            handleAgentSubmit(e, {
-              data: {
-                annotations: {
-                  hello: "world",
-                },
-              },
-            })
-          }
+          onSubmit={(e) => handleAgentSubmit(e)}
           className="p-3 bg-input-background absolute bottom-0 left-0 right-0 z-10 border-t border-assistant-border/30"
         >
           <div className="flex items-center gap-2">
