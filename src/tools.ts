@@ -15,7 +15,6 @@ import { agentContext } from "./server";
 const getWeatherInformation = tool({
   description: "show the weather in a given city to the user",
   parameters: z.object({ city: z.string() }),
-  // Omitting execute function makes this tool require human confirmation
 });
 
 /**
@@ -63,6 +62,7 @@ const scheduleTask = tool({
     return `Task scheduled for ${when}`;
   },
 });
+
 /**
  * Export all available tools
  * These will be provided to the AI model to describe available capabilities
@@ -75,8 +75,6 @@ export const tools = {
 
 /**
  * Implementation of confirmation-required tools
- * This object contains the actual logic for tools that need human approval
- * Each function here corresponds to a tool above that doesn't have an execute function
  */
 export const executions = {
   getWeatherInformation: async ({ city }: { city: string }) => {

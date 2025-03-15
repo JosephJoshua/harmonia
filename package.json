@@ -36,9 +36,11 @@
     "wrangler": "^4.0.0"
   },
   "dependencies": {
+    "@ai-sdk/deepseek": "^0.1.15",
     "@ai-sdk/openai": "^1.2.5",
     "@ai-sdk/react": "^1.1.23",
     "@ai-sdk/ui-utils": "^1.1.19",
+    "@openrouter/ai-sdk-provider": "^0.4.3",
     "@radix-ui/react-avatar": "^1.1.3",
     "@radix-ui/react-slot": "^1.1.2",
     "@radix-ui/react-switch": "^1.1.3",

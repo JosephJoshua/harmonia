@@ -30,7 +30,7 @@ function isValidToolName<K extends PropertyKey, T extends object>(
 export async function processToolCalls<
   Tools extends ToolSet,
   ExecutableTools extends {
-    // biome-ignore lint/complexity/noBannedTypes: it's fine
+    // biome-ignore lint/complexity/noBannedTypes:
     [Tool in keyof Tools as Tools[Tool] extends { execute: Function }
       ? never
       : Tool]: Tools[Tool];
@@ -40,7 +40,7 @@ export async function processToolCalls<
   messages,
   executions,
 }: {
-  tools: Tools; // used for type inference
+  tools: Tools;
   dataStream: DataStreamWriter;
   messages: Message[];
   executions: {
@@ -56,13 +56,14 @@ export async function processToolCalls<
 
   const processedParts = await Promise.all(
     parts.map(async (part) => {
-      // Only process tool invocations parts
+      // Only process tool invocation parts
       if (part.type !== "tool-invocation") return part;
 
       const { toolInvocation } = part;
       const toolName = toolInvocation.toolName;
 
-      // Only continue if we have an execute function for the tool (meaning it requires confirmation) and it's in a 'result' state
+      // Only continue if we have an execute function for the tool (meaning it requires confirmation)
+      // and it's in a 'result' state
       if (!(toolName in executions) || toolInvocation.state !== "result")
         return part;
 
@@ -101,7 +102,6 @@ export async function processToolCalls<
         })
       );
 
-      // Return updated toolInvocation with the actual result.
       return {
         ...part,
         toolInvocation: {
@@ -112,7 +112,6 @@ export async function processToolCalls<
     })
   );
 
-  // Finally return the processed messages
   return [...messages.slice(0, -1), { ...lastMessage, parts: processedParts }];
 }
 
